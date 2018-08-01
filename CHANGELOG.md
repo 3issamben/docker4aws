@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [tomalok2] - unreleased
+## [tomalok2] - 2018-08-01
 ### Added
 * New template paramters!
   * Configurable Manager/Worker ECR policies!
@@ -13,6 +13,9 @@
     * A list of regions (i.e. `us-west-2,eu-central-1,ap-northeast-1`) caches/refreshes ECR creds for your account-id in those regions.
     * To access other accounts' ECR (provided they've granted access), use a `=` followed by a `:`-separated list of AccountIds, optionally after a specified region.
     * For example, `=,us-east-2=123456789012:112233445566,us-west-2=:210987654321`, would cache/refresh ECR creds for your account-id in the current region and us-west-2, for two other account-ids in us-east-2, and one other account-id in us-west-2.
+  * Configurable Manager/Worker ACM policies!
+    * Selectable `read-only`, `full-access`, and `unspecified` ACM policy types.
+    * Specify list of ACM certificate ARNs to which the ACM policy applies.
 * `install-refresh-ecr-auth.sh`
    * echoes prorgress (viewable in EC2 instance system logs).
    * sanitizes/expands ECR auth login targets.

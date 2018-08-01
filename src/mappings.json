@@ -32,5 +32,24 @@
       "actions" : [
       ]
     }
+  },
+  "ACMPolicyActions": {
+    "read-only": {
+      "actions": [
+        "acm:DescribeCertificate",
+        "acm:GetCertificate",
+        "acm:ListCertificates",
+        "acm:ListTagsForCertificates"
+      ]
+    },
+    "full-access": {
+      "actions": [
+        "ecr:*"
+      ]
+    },
+    "unspecified": {
+      "actions" : [
+      ]
+    }
   }
 }

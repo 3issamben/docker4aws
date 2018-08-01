@@ -1,10 +1,14 @@
 {
   "Swarm Manager Properties": [
     "ManagerECRPolicyType",
-    "ManagerECRPolicyARNs"
+    "ManagerECRPolicyARNs",
+    "ManagerACMPolicyType",
+    "ManagerACMPolicyARNs"
   ],
   "Swarm Worker Properties": [
     "WorkerECRPolicyType",
-    "WorkerECRPolicyARNs"
+    "WorkerECRPolicyARNs",
+    "WorkerACMPolicyType",
+    "WorkerACMPolicyARNs"
   ]
 }

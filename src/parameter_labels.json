@@ -13,5 +13,17 @@
   },
   "ECRAuthLoginTargets": {
     "default": "ECR auth login targets"
+  },
+  "ManagerACMPolicyType": {
+    "default": "Manager ACM policy type"
+  },
+  "ManagerACMPolicyARNs": {
+    "default": "Manager ACM policy resource ARNs"
+  },
+  "WorkerACMPolicyType": {
+    "default": "Worker ACM policy type"
+  },
+  "WorkerACMPolicyARNs": {
+    "default": "Worker ACM policy resource ARNs"
   }
 }
