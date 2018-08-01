@@ -1,0 +1,29 @@
+{
+  "ManagerECRPolicyType": {
+    "default": "Manager ECR policy type"
+  },
+  "ManagerECRPolicyARNs": {
+    "default": "Manager ECR policy resource ARNs"
+  },
+  "WorkerECRPolicyType": {
+    "default": "Worker ECR policy type"
+  },
+  "WorkerECRPolicyARNs": {
+    "default": "Worker ECR policy resource ARNs"
+  },
+  "ECRAuthLoginTargets": {
+    "default": "ECR auth login targets"
+  },
+  "ManagerACMPolicyType": {
+    "default": "Manager ACM policy type"
+  },
+  "ManagerACMPolicyARNs": {
+    "default": "Manager ACM policy resource ARNs"
+  },
+  "WorkerACMPolicyType": {
+    "default": "Worker ACM policy type"
+  },
+  "WorkerACMPolicyARNs": {
+    "default": "Worker ACM policy resource ARNs"
+  }
+}

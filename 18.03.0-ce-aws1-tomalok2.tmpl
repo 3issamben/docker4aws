@@ -78,7 +78,7 @@
       ]
     }
   },
-  "Description": "Docker CE for AWS 18.03.0-ce (18.03.0-ce-aws1-tomalok1)",
+  "Description": "Docker CE for AWS 18.03.0-ce (18.03.0-ce-aws1-tomalok2)",
   "Mappings": {
     "AWSInstanceType2Arch": {
       "c3.2xlarge": {
@@ -458,6 +458,61 @@
       "vpc": {
         "cidr": "172.31.0.0/16"
       }
+    },
+    "ECRPolicyActions": {
+      "pull-only": {
+        "actions": [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:GetRepositoryPolicy",
+          "ecr:DescribeRepositories",
+          "ecr:ListImages",
+          "ecr:DescribeImages",
+          "ecr:BatchGetImage"
+        ]
+      },
+      "push-pull": {
+        "actions": [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:GetRepositoryPolicy",
+          "ecr:DescribeRepositories",
+          "ecr:ListImages",
+          "ecr:DescribeImages",
+          "ecr:BatchGetImage",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+          "ecr:PutImage"
+        ]
+      },
+      "unspecified": {
+        "actions": [
+
+        ]
+      }
+    },
+    "ACMPolicyActions": {
+      "read-only": {
+        "actions": [
+          "acm:DescribeCertificate",
+          "acm:GetCertificate",
+          "acm:ListCertificates",
+          "acm:ListTagsForCertificates"
+        ]
+      },
+      "full-access": {
+        "actions": [
+          "ecr:*"
+        ]
+      },
+      "unspecified": {
+        "actions": [
+
+        ]
+      }
     }
   },
   "Metadata": {
@@ -490,7 +545,11 @@
           "Parameters": [
             "ManagerInstanceType",
             "ManagerDiskSize",
-            "ManagerDiskType"
+            "ManagerDiskType",
+            "ManagerECRPolicyType",
+            "ManagerECRPolicyARNs",
+            "ManagerACMPolicyType",
+            "ManagerACMPolicyARNs"
           ]
         },
         {
@@ -500,7 +559,11 @@
           "Parameters": [
             "InstanceType",
             "WorkerDiskSize",
-            "WorkerDiskType"
+            "WorkerDiskType",
+            "WorkerECRPolicyType",
+            "WorkerECRPolicyARNs",
+            "WorkerACMPolicyType",
+            "WorkerACMPolicyARNs"
           ]
         }
       ],
@@ -546,6 +609,33 @@
         },
         "WorkerDiskType": {
           "default": "Worker ephemeral storage volume type"
+        },
+        "ManagerECRPolicyType": {
+          "default": "Manager ECR policy type"
+        },
+        "ManagerECRPolicyARNs": {
+          "default": "Manager ECR policy resource ARNs"
+        },
+        "WorkerECRPolicyType": {
+          "default": "Worker ECR policy type"
+        },
+        "WorkerECRPolicyARNs": {
+          "default": "Worker ECR policy resource ARNs"
+        },
+        "ECRAuthLoginTargets": {
+          "default": "ECR auth login targets"
+        },
+        "ManagerACMPolicyType": {
+          "default": "Manager ACM policy type"
+        },
+        "ManagerACMPolicyARNs": {
+          "default": "Manager ACM policy resource ARNs"
+        },
+        "WorkerACMPolicyType": {
+          "default": "Worker ACM policy type"
+        },
+        "WorkerACMPolicyARNs": {
+          "default": "Worker ACM policy resource ARNs"
         }
       }
     }
@@ -828,6 +918,71 @@
       "Default": "standard",
       "Description": "Worker ephemeral storage volume type",
       "Type": "String"
+    },
+    "ManagerECRPolicyType": {
+      "AllowedValues": [
+        "pull-only",
+        "push-pull",
+        "unuspecified"
+      ],
+      "Default": "pull-only",
+      "Description": "Choosing 'unspecified' leaves it up to other existing policies.",
+      "Type": "String"
+    },
+    "ManagerECRPolicyARNs": {
+      "Default": "*",
+      "Description": "List of ECR ARNs to which the manager ECR policy type applies.  Format: <ecr-arn>[, ... ]",
+      "Type": "CommaDelimitedList"
+    },
+    "WorkerECRPolicyType": {
+      "AllowedValues": [
+        "pull-only",
+        "push-pull",
+        "unspecified"
+      ],
+      "Default": "pull-only",
+      "Description": "Choosing 'unspecified' leaves it up to other existing policies.",
+      "Type": "String"
+    },
+    "WorkerECRPolicyARNs": {
+      "Default": "*",
+      "Description": "List of ECR ARNs to which the worker ECR policy type applies.  Format: <ecr-arn>[, ... ]",
+      "Type": "CommaDelimitedList"
+    },
+    "ECRAuthLoginTargets": {
+      "Default": "=",
+      "Description": "List of AWS regions and/or account-ids to maintain ECR auth credentials in the swarm.  At minimum, a value of '=' is required to enable this feature, which defaults to current AWS Region and AccountId.  Format: [<region>][=[<acct-id>[:<acct-id> ...]]][, ... ]",
+      "Type": "CommaDelimitedList"
+    },
+    "ManagerACMPolicyType": {
+      "AllowedValues": [
+        "read-only",
+        "full-access",
+        "unspecified"
+      ],
+      "Default": "read-only",
+      "Description": "Choosing 'unspecified' leaves it up to other existing policies.",
+      "Type": "String"
+    },
+    "ManagerACMPolicyARNs": {
+      "Default": "*",
+      "Description": "List of ACM ARNs to which the manager ACM policy type applies.  Format: <acm-arn>[, ... ]",
+      "Type": "CommaDelimitedList"
+    },
+    "WorkerACMPolicyType": {
+      "AllowedValues": [
+        "read-only",
+        "full-access",
+        "unspecified"
+      ],
+      "Default": "read-only",
+      "Description": "Choosing 'unspecified' leaves it up to other existing policies.",
+      "Type": "String"
+    },
+    "WorkerACMPolicyARNs": {
+      "Default": "*",
+      "Description": "List of ACM ARNs to which the worker ACM policy type applies.  Format: <acm-arn>[, ... ]",
+      "Type": "CommaDelimitedList"
     }
   },
   "Resources": {
@@ -1047,43 +1202,6 @@
         },
         "PolicyName": "worker-dyndb-get",
         "Roles": [
-          {
-            "Ref": "WorkerRole"
-          }
-        ]
-      },
-      "Type": "AWS::IAM::Policy"
-    },
-    "ECRPolicy": {
-      "DependsOn": [
-        "ProxyRole",
-        "WorkerRole"
-      ],
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "ecr:GetAuthorizationToken",
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:GetRepositoryPolicy",
-                "ecr:DescribeRepositories",
-                "ecr:ListImages",
-                "ecr:DescribeImages",
-                "ecr:BatchGetImage"
-              ],
-              "Effect": "Allow",
-              "Resource": "*"
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "PolicyName": "ecr-policy",
-        "Roles": [
-          {
-            "Ref": "ProxyRole"
-          },
           {
             "Ref": "WorkerRole"
           }
@@ -1330,7 +1448,7 @@
         "HealthCheckGracePeriod": 300,
         "HealthCheckType": "ELB",
         "LaunchConfigurationName": {
-          "Ref": "ManagerLaunchConfig18030ceaws1tomalok1"
+          "Ref": "ManagerLaunchConfig18030ceaws1"
         },
         "LoadBalancerNames": [
           {
@@ -1443,6 +1561,337 @@
           "WaitOnResourceSignals": "true"
         }
       }
+    },
+    "ManagerLaunchConfig18030ceaws1": {
+      "DependsOn": "ExternalLoadBalancer",
+      "Properties": {
+        "AssociatePublicIpAddress": "true",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvdb",
+            "Ebs": {
+              "VolumeSize": {
+                "Ref": "ManagerDiskSize"
+              },
+              "VolumeType": {
+                "Ref": "ManagerDiskType"
+              }
+            }
+          }
+        ],
+        "EbsOptimized": {
+          "Fn::If": [
+            "EBSOptimized",
+            "true",
+            "false"
+          ]
+        },
+        "IamInstanceProfile": {
+          "Ref": "ProxyInstanceProfile"
+        },
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSRegionArch2AMI",
+            {
+              "Ref": "AWS::Region"
+            },
+            {
+              "Fn::FindInMap": [
+                "AWSInstanceType2Arch",
+                {
+                  "Ref": "ManagerInstanceType"
+                },
+                "Arch"
+              ]
+            }
+          ]
+        },
+        "InstanceType": {
+          "Ref": "ManagerInstanceType"
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "ManagerVpcSG"
+          },
+          {
+            "Ref": "SwarmWideSG"
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/sh\n",
+                "export EXTERNAL_LB='",
+                {
+                  "Ref": "ExternalLoadBalancer"
+                },
+                "'\n",
+                "export DOCKER_FOR_IAAS_VERSION='",
+                {
+                  "Fn::FindInMap": [
+                    "DockerForAWS",
+                    "version",
+                    "forAws"
+                  ]
+                },
+                "'\n",
+                "export CHANNEL='",
+                {
+                  "Fn::FindInMap": [
+                    "DockerForAWS",
+                    "version",
+                    "channel"
+                  ]
+                },
+                "'\n",
+                "export EDITION_ADDON='",
+                {
+                  "Fn::FindInMap": [
+                    "DockerForAWS",
+                    "version",
+                    "addOn"
+                  ]
+                },
+                "'\n",
+                "export LOCAL_IP=$(wget -qO- http://169.254.169.254/latest/meta-data/local-ipv4)\n",
+                "export INSTANCE_TYPE=$(wget -qO- http://169.254.169.254/latest/meta-data/instance-type)\n",
+                "export NODE_AZ=$(wget -qO- http://169.254.169.254/latest/meta-data/placement/availability-zone/)\n",
+                "export NODE_REGION=$(echo $NODE_AZ | sed 's/.$//')\n",
+                "export ENABLE_CLOUDWATCH_LOGS='",
+                {
+                  "Ref": "EnableCloudWatchLogs"
+                },
+                "'\n",
+                "export AWS_REGION='",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "'\n",
+                "export MANAGER_SECURITY_GROUP_ID='",
+                {
+                  "Ref": "ManagerVpcSG"
+                },
+                "'\n",
+                "export WORKER_SECURITY_GROUP_ID='",
+                {
+                  "Ref": "NodeVpcSG"
+                },
+                "'\n",
+                "export DYNAMODB_TABLE='",
+                {
+                  "Ref": "SwarmDynDBTable"
+                },
+                "'\n",
+                "export STACK_NAME='",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "'\n",
+                "export STACK_ID='",
+                {
+                  "Ref": "AWS::StackId"
+                },
+                "'\n",
+                "export ACCOUNT_ID='",
+                {
+                  "Ref": "AWS::AccountId"
+                },
+                "'\n",
+                "export VPC_ID='",
+                {
+                  "Ref": "Vpc"
+                },
+                "'\n",
+                "export SWARM_QUEUE='",
+                {
+                  "Ref": "SwarmSQS"
+                },
+                "'\n",
+                "export CLEANUP_QUEUE='",
+                {
+                  "Ref": "SwarmSQSCleanup"
+                },
+                "'\n",
+                "export RUN_VACUUM='",
+                {
+                  "Ref": "EnableSystemPrune"
+                },
+                "'\n",
+                "export LOG_GROUP_NAME='",
+                {
+                  "Fn::Join": [
+                    "-",
+                    [
+                      {
+                        "Ref": "AWS::StackName"
+                      },
+                      "lg"
+                    ]
+                  ]
+                },
+                "'\n",
+                "export HAS_DDC='",
+                {
+                  "Fn::FindInMap": [
+                    "DockerForAWS",
+                    "version",
+                    "HasDDC"
+                  ]
+                },
+                "'\n",
+                "export ENABLE_EFS='",
+                {
+                  "Fn::If": [
+                    "InstallCloudStorEFSPreReqs",
+                    "1",
+                    "0"
+                  ]
+                },
+                "'\n",
+                "export EFS_ID_REGULAR='",
+                {
+                  "Fn::If": [
+                    "InstallCloudStorEFSPreReqs",
+                    {
+                      "Ref": "FileSystemGP"
+                    },
+                    ""
+                  ]
+                },
+                "'\n",
+                "export EFS_ID_MAXIO='",
+                {
+                  "Fn::If": [
+                    "InstallCloudStorEFSPreReqs",
+                    {
+                      "Ref": "FileSystemMaxIO"
+                    },
+                    ""
+                  ]
+                },
+                "'\n",
+                "export DOCKER_EXPERIMENTAL='true' \n",
+                "export NODE_TYPE='manager'\n",
+                "export INSTANCE_NAME='ManagerAsg'\n",
+                "\n",
+                "mkdir -p /var/lib/docker/editions\n",
+                "echo \"$EXTERNAL_LB\" > /var/lib/docker/editions/lb_name\n",
+                "echo \"# hostname : ELB_name\" >> /var/lib/docker/editions/elb.config\n",
+                "echo \"127.0.0.1: $EXTERNAL_LB\" >> /var/lib/docker/editions/elb.config\n",
+                "echo \"localhost: $EXTERNAL_LB\" >> /var/lib/docker/editions/elb.config\n",
+                "echo \"default: $EXTERNAL_LB\" >> /var/lib/docker/editions/elb.config\n",
+                "\n",
+                "echo '{\"experimental\": '$DOCKER_EXPERIMENTAL', \"labels\":[\"os=linux\", \"region='$NODE_REGION'\", \"availability_zone='$NODE_AZ'\", \"instance_type='$INSTANCE_TYPE'\", \"node_type='$NODE_TYPE'\" ]' > /etc/docker/daemon.json\n",
+                "\n",
+                "if [ $ENABLE_CLOUDWATCH_LOGS == 'yes' ] ; then\n",
+                "   echo ', \"log-driver\": \"awslogs\", \"log-opts\": {\"awslogs-group\": \"'$LOG_GROUP_NAME'\", \"tag\": \"{{.Name}}-{{.ID}}\" }}' >> /etc/docker/daemon.json\n",
+                "else\n",
+                "   echo ' }' >> /etc/docker/daemon.json\n",
+                "fi\n",
+                "\n",
+                "chown -R docker /home/docker/\n",
+                "chgrp -R docker /home/docker/\n",
+                "rc-service docker restart\n",
+                "sleep 5\n",
+                "\n",
+                "# init-aws\n",
+                "docker run --label com.docker.editions.system --log-driver=json-file --restart=no -d -e DYNAMODB_TABLE=$DYNAMODB_TABLE -e NODE_TYPE=$NODE_TYPE -e REGION=$AWS_REGION -e STACK_NAME=$STACK_NAME -e STACK_ID=\"$STACK_ID\" -e ACCOUNT_ID=$ACCOUNT_ID -e INSTANCE_NAME=$INSTANCE_NAME -e DOCKER_FOR_IAAS_VERSION=$DOCKER_FOR_IAAS_VERSION -e EDITION_ADDON=$EDITION_ADDON -e HAS_DDC=$HAS_DDC -v /var/run/docker.sock:/var/run/docker.sock -v /var/log:/var/log docker4x/init-aws:$DOCKER_FOR_IAAS_VERSION\n",
+                "\n",
+                "# guide-aws\n",
+                "docker run --label com.docker.editions.system --log-driver=json-file --log-opt max-size=50m --name=guide-aws --restart=always -d -e DYNAMODB_TABLE=$DYNAMODB_TABLE -e NODE_TYPE=$NODE_TYPE -e REGION=$AWS_REGION -e STACK_NAME=$STACK_NAME -e INSTANCE_NAME=$INSTANCE_NAME -e VPC_ID=$VPC_ID -e STACK_ID=\"$STACK_ID\" -e ACCOUNT_ID=$ACCOUNT_ID -e SWARM_QUEUE=\"$SWARM_QUEUE\" -e CLEANUP_QUEUE=\"$CLEANUP_QUEUE\" -e RUN_VACUUM=$RUN_VACUUM -e DOCKER_FOR_IAAS_VERSION=$DOCKER_FOR_IAAS_VERSION -e EDITION_ADDON=$EDITION_ADDON -e HAS_DDC=$HAS_DDC -e CHANNEL=$CHANNEL -v /var/run/docker.sock:/var/run/docker.sock docker4x/guide-aws:$DOCKER_FOR_IAAS_VERSION\n",
+                "\n",
+                "# cloudstor\n",
+                "docker plugin install --alias cloudstor:aws --grant-all-permissions docker4x/cloudstor:$DOCKER_FOR_IAAS_VERSION CLOUD_PLATFORM=AWS EFS_ID_REGULAR=$EFS_ID_REGULAR EFS_ID_MAXIO=$EFS_ID_MAXIO AWS_REGION=$AWS_REGION AWS_STACK_ID=$STACK_ID EFS_SUPPORTED=$ENABLE_EFS DEBUG=1\n",
+                "docker run --label com.docker.editions.system --log-driver=json-file  --log-opt max-size=50m --name=meta-aws --restart=always -d -p $LOCAL_IP:9024:8080 -e AWS_REGION=$AWS_REGION -e MANAGER_SECURITY_GROUP_ID=$MANAGER_SECURITY_GROUP_ID -e WORKER_SECURITY_GROUP_ID=$WORKER_SECURITY_GROUP_ID -v /var/run/docker.sock:/var/run/docker.sock docker4x/meta-aws:$DOCKER_FOR_IAAS_VERSION metaserver -iaas_provider=aws\n",
+                "docker run --label com.docker.editions.system --log-driver=json-file  --log-opt max-size=50m --name=l4controller-aws --restart=always -d -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/editions:/var/lib/docker/editions docker4x/l4controller-aws:$DOCKER_FOR_IAAS_VERSION run --log=4 --all=true\n",
+                "# Sanitize ECR auth targets\n",
+                "export ECR_AUTH_LOGINS=$(echo '",
+                {
+                  "Fn::Join": [
+                    ",",
+                    {
+                      "Ref": "ECRAuthLoginTargets"
+                    }
+                  ]
+                },
+                "'|tr -d ' ')\n",
+                "### begin install of refresh-ecr-auth.sh\n",
+                "while true; do\n",
+                "  EXPAND=$(echo $ECR_AUTH_LOGINS | \\\n",
+                "    sed -E \\\n",
+                "      -e 's/(^,+|,+$)//g' \\\n",
+                "      -e 's/,,+/,/g' \\\n",
+                "      -e \"s/(^|,)([^=,]+)(,|$)/\\1\\2=$ACCOUNT_ID\\3/g\" \\\n",
+                "      -e \"s/(^|,)=/\\1$AWS_REGION=/g\" \\\n",
+                "      -e \"s/(=|:):*(:|,|$)/\\1$ACCOUNT_ID\\2/g\" \\\n",
+                "      -e \"s/:(,|$)/\\1/g\"\n",
+                "  )\n",
+                "  [ \"$EXPAND\" = \"$ECR_AUTH_LOGINS\" ] && break\n",
+                "  ECR_AUTH_LOGINS=$EXPAND\n",
+                "done\n",
+                "if [ -n \"$ECR_AUTH_LOGINS\" ]; then\n",
+                "  BIN=/usr/local/bin\n",
+                "  SCRIPT=refresh-ecr-auth.sh\n",
+                "  echo \" * Installing $BIN/$SCRIPT...\"\n",
+                "  mkdir -p $BIN\n",
+                "  cat >$BIN/$SCRIPT <<EOF\n",
+                "#!/bin/sh\n",
+                "log() {\n",
+                "  logger -st \\$(basename \\$0) \\$@\n",
+                "}\n",
+                "for TGT in $(echo $ECR_AUTH_LOGINS | tr ',' ' '); do\n",
+                "  echo \"\\$TGT\" | tr '=' ' ' | (\n",
+                "    read REGION ACCOUNTS\n",
+                "    ACCOUNTS=\\$(echo \\$ACCOUNTS | tr ':' ' ')\n",
+                "    log \"INFO - Refreshing \\$REGION ECR creds for \\$ACCOUNTS...\"\n",
+                "    su docker sh -c \"eval \\$(docker exec guide-aws aws ecr get-login --no-include-email --region \\$REGION --registry-ids \\$ACCOUNTS)\" | log\n",
+                "  )\n",
+                "done\n",
+                "( WAIT=1; MAX=60; TRY=0\n",
+                "  while true; do\n",
+                "    TRY=\\$(( TRY + 1))\n",
+                "    SERVICES=\\$(su docker sh -c \"docker service ls --format '{{.Name}}' 2>/dev/null\")\n",
+                "    if [ \\$? -eq 0 ]; then\n",
+                "      log \"INFO - Triggering update of swarm services' registry auth...\"\n",
+                "      for SERVICE in \\$SERVICES; do\n",
+                "        su docker sh -c \"docker service update -d -q --with-registry-auth \\$SERVICE\" | log\n",
+                "      done\n",
+                "      log \"INFO - Done triggering swarm services' registry auth updates.\"\n",
+                "      break\n",
+                "    fi\n",
+                "    if [ \\$TRY -eq \\$MAX ]; then\n",
+                "      log \"ERROR - Still not part of swarm after \\$(( MAX * WAIT )) secs, aborting.\"\n",
+                "      break\n",
+                "    fi\n",
+                "    log \"WARN - Not yet part of swarm (try #\\$TRY), retry in \\$WAIT secs.\"\n",
+                "    sleep \\$WAIT\n",
+                "  done\n",
+                ") &\n",
+                "EOF\n",
+                "  chmod +x $BIN/$SCRIPT\n",
+                "  echo \" * Installing cron to execute $BIN/$SCRIPT...\"\n",
+                "  sed -e \"/$SCRIPT/d\" /etc/crontabs/root > /tmp/root-crontab\n",
+                "  echo \"# run $SCRIPT on the random-th minute every 8 hours\" >> /tmp/root-crontab\n",
+                "  echo \"$(( $RANDOM % 60 )) */8 * * * $BIN/$SCRIPT >/dev/null 2>&1\" >> /tmp/root-crontab\n",
+                "  crontab -c /etc/crontabs /tmp/root-crontab\n",
+                "  rm /tmp/root-crontab\n",
+                "  echo \" * Initial execution of $BIN/$SCRIPT...\"\n",
+                "  $BIN/$SCRIPT\n",
+                "else\n",
+                "  echo \" * Not Installing ECR Auth Refresh Script - no ECR Auth Login Targets specified.\"\n",
+                "fi\n",
+                "### end installation of refresh-ecr-auth.sh\n"
+              ]
+            ]
+          }
+        }
+      },
+      "Type": "AWS::AutoScaling::LaunchConfiguration"
     },
     "ManagerVpcSG": {
       "DependsOn": "NodeVpcSG",
@@ -1658,7 +2107,7 @@
         "HealthCheckGracePeriod": 300,
         "HealthCheckType": "ELB",
         "LaunchConfigurationName": {
-          "Ref": "NodeLaunchConfig18030ceaws1tomalok1"
+          "Ref": "NodeLaunchConfig18030ceaws1"
         },
         "LoadBalancerNames": [
           {
@@ -1771,6 +2220,256 @@
           "WaitOnResourceSignals": "true"
         }
       }
+    },
+    "NodeLaunchConfig18030ceaws1": {
+      "DependsOn": "ManagerAsg",
+      "Properties": {
+        "AssociatePublicIpAddress": "true",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvdb",
+            "Ebs": {
+              "VolumeSize": {
+                "Ref": "WorkerDiskSize"
+              },
+              "VolumeType": {
+                "Ref": "WorkerDiskType"
+              }
+            }
+          }
+        ],
+        "EbsOptimized": {
+          "Fn::If": [
+            "EBSOptimized",
+            "true",
+            "false"
+          ]
+        },
+        "IamInstanceProfile": {
+          "Ref": "WorkerInstanceProfile"
+        },
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSRegionArch2AMI",
+            {
+              "Ref": "AWS::Region"
+            },
+            {
+              "Fn::FindInMap": [
+                "AWSInstanceType2Arch",
+                {
+                  "Ref": "InstanceType"
+                },
+                "Arch"
+              ]
+            }
+          ]
+        },
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "NodeVpcSG"
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/sh\n",
+                "export EXTERNAL_LB='",
+                {
+                  "Ref": "ExternalLoadBalancer"
+                },
+                "'\n",
+                "export DOCKER_FOR_IAAS_VERSION='",
+                {
+                  "Fn::FindInMap": [
+                    "DockerForAWS",
+                    "version",
+                    "forAws"
+                  ]
+                },
+                "'\n",
+                "export CHANNEL='",
+                {
+                  "Fn::FindInMap": [
+                    "DockerForAWS",
+                    "version",
+                    "channel"
+                  ]
+                },
+                "'\n",
+                "export EDITION_ADDON='",
+                {
+                  "Fn::FindInMap": [
+                    "DockerForAWS",
+                    "version",
+                    "addOn"
+                  ]
+                },
+                "'\n",
+                "export LOCAL_IP=$(wget -qO- http://169.254.169.254/latest/meta-data/local-ipv4)\n",
+                "export INSTANCE_TYPE=$(wget -qO- http://169.254.169.254/latest/meta-data/instance-type)\n",
+                "export NODE_AZ=$(wget -qO- http://169.254.169.254/latest/meta-data/placement/availability-zone/)\n",
+                "export NODE_REGION=$(echo $NODE_AZ | sed 's/.$//')\n",
+                "export ENABLE_CLOUDWATCH_LOGS='",
+                {
+                  "Ref": "EnableCloudWatchLogs"
+                },
+                "'\n",
+                "export AWS_REGION='",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "'\n",
+                "export MANAGER_SECURITY_GROUP_ID='",
+                {
+                  "Ref": "ManagerVpcSG"
+                },
+                "'\n",
+                "export WORKER_SECURITY_GROUP_ID='",
+                {
+                  "Ref": "NodeVpcSG"
+                },
+                "'\n",
+                "export DYNAMODB_TABLE='",
+                {
+                  "Ref": "SwarmDynDBTable"
+                },
+                "'\n",
+                "export STACK_NAME='",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "'\n",
+                "export STACK_ID='",
+                {
+                  "Ref": "AWS::StackId"
+                },
+                "'\n",
+                "export ACCOUNT_ID='",
+                {
+                  "Ref": "AWS::AccountId"
+                },
+                "'\n",
+                "export VPC_ID='",
+                {
+                  "Ref": "Vpc"
+                },
+                "'\n",
+                "export SWARM_QUEUE='",
+                {
+                  "Ref": "SwarmSQS"
+                },
+                "'\n",
+                "export CLEANUP_QUEUE='",
+                {
+                  "Ref": "SwarmSQSCleanup"
+                },
+                "'\n",
+                "export RUN_VACUUM='",
+                {
+                  "Ref": "EnableSystemPrune"
+                },
+                "'\n",
+                "export LOG_GROUP_NAME='",
+                {
+                  "Fn::Join": [
+                    "-",
+                    [
+                      {
+                        "Ref": "AWS::StackName"
+                      },
+                      "lg"
+                    ]
+                  ]
+                },
+                "'\n",
+                "export HAS_DDC='",
+                {
+                  "Fn::FindInMap": [
+                    "DockerForAWS",
+                    "version",
+                    "HasDDC"
+                  ]
+                },
+                "'\n",
+                "export ENABLE_EFS='",
+                {
+                  "Fn::If": [
+                    "InstallCloudStorEFSPreReqs",
+                    "1",
+                    "0"
+                  ]
+                },
+                "'\n",
+                "export EFS_ID_REGULAR='",
+                {
+                  "Fn::If": [
+                    "InstallCloudStorEFSPreReqs",
+                    {
+                      "Ref": "FileSystemGP"
+                    },
+                    ""
+                  ]
+                },
+                "'\n",
+                "export EFS_ID_MAXIO='",
+                {
+                  "Fn::If": [
+                    "InstallCloudStorEFSPreReqs",
+                    {
+                      "Ref": "FileSystemMaxIO"
+                    },
+                    ""
+                  ]
+                },
+                "'\n",
+                "export DOCKER_EXPERIMENTAL='true' \n",
+                "export NODE_TYPE='worker'\n",
+                "export INSTANCE_NAME='NodeAsg'\n",
+                "\n",
+                "mkdir -p /var/lib/docker/editions\n",
+                "echo \"$EXTERNAL_LB\" > /var/lib/docker/editions/lb_name\n",
+                "echo \"# hostname : ELB_name\" >> /var/lib/docker/editions/elb.config\n",
+                "echo \"127.0.0.1: $EXTERNAL_LB\" >> /var/lib/docker/editions/elb.config\n",
+                "echo \"localhost: $EXTERNAL_LB\" >> /var/lib/docker/editions/elb.config\n",
+                "echo \"default: $EXTERNAL_LB\" >> /var/lib/docker/editions/elb.config\n",
+                "\n",
+                "echo '{\"experimental\": '$DOCKER_EXPERIMENTAL', \"labels\":[\"os=linux\", \"region='$NODE_REGION'\", \"availability_zone='$NODE_AZ'\", \"instance_type='$INSTANCE_TYPE'\", \"node_type='$NODE_TYPE'\" ]' > /etc/docker/daemon.json\n",
+                "\n",
+                "if [ $ENABLE_CLOUDWATCH_LOGS == 'yes' ] ; then\n",
+                "   echo ', \"log-driver\": \"awslogs\", \"log-opts\": {\"awslogs-group\": \"'$LOG_GROUP_NAME'\", \"tag\": \"{{.Name}}-{{.ID}}\" }}' >> /etc/docker/daemon.json\n",
+                "else\n",
+                "   echo ' }' >> /etc/docker/daemon.json\n",
+                "fi\n",
+                "\n",
+                "chown -R docker /home/docker/\n",
+                "chgrp -R docker /home/docker/\n",
+                "rc-service docker restart\n",
+                "sleep 5\n",
+                "\n",
+                "# init-aws\n",
+                "docker run --label com.docker.editions.system --log-driver=json-file --restart=no -d -e DYNAMODB_TABLE=$DYNAMODB_TABLE -e NODE_TYPE=$NODE_TYPE -e REGION=$AWS_REGION -e STACK_NAME=$STACK_NAME -e STACK_ID=\"$STACK_ID\" -e ACCOUNT_ID=$ACCOUNT_ID -e INSTANCE_NAME=$INSTANCE_NAME -e DOCKER_FOR_IAAS_VERSION=$DOCKER_FOR_IAAS_VERSION -e EDITION_ADDON=$EDITION_ADDON -e HAS_DDC=$HAS_DDC -v /var/run/docker.sock:/var/run/docker.sock -v /var/log:/var/log docker4x/init-aws:$DOCKER_FOR_IAAS_VERSION\n",
+                "\n",
+                "# guide-aws\n",
+                "docker run --label com.docker.editions.system --log-driver=json-file --log-opt max-size=50m --name=guide-aws --restart=always -d -e DYNAMODB_TABLE=$DYNAMODB_TABLE -e NODE_TYPE=$NODE_TYPE -e REGION=$AWS_REGION -e STACK_NAME=$STACK_NAME -e INSTANCE_NAME=$INSTANCE_NAME -e VPC_ID=$VPC_ID -e STACK_ID=\"$STACK_ID\" -e ACCOUNT_ID=$ACCOUNT_ID -e SWARM_QUEUE=\"$SWARM_QUEUE\" -e CLEANUP_QUEUE=\"$CLEANUP_QUEUE\" -e RUN_VACUUM=$RUN_VACUUM -e DOCKER_FOR_IAAS_VERSION=$DOCKER_FOR_IAAS_VERSION -e EDITION_ADDON=$EDITION_ADDON -e HAS_DDC=$HAS_DDC -e CHANNEL=$CHANNEL -v /var/run/docker.sock:/var/run/docker.sock docker4x/guide-aws:$DOCKER_FOR_IAAS_VERSION\n",
+                "\n",
+                "# cloudstor\n",
+                "docker plugin install --alias cloudstor:aws --grant-all-permissions docker4x/cloudstor:$DOCKER_FOR_IAAS_VERSION CLOUD_PLATFORM=AWS EFS_ID_REGULAR=$EFS_ID_REGULAR EFS_ID_MAXIO=$EFS_ID_MAXIO AWS_REGION=$AWS_REGION AWS_STACK_ID=$STACK_ID EFS_SUPPORTED=$ENABLE_EFS DEBUG=1\n",
+                "# Worker user data\n"
+              ]
+            ]
+          }
+        }
+      },
+      "Type": "AWS::AutoScaling::LaunchConfiguration"
     },
     "NodeVpcSG": {
       "DependsOn": "Vpc",
@@ -2512,551 +3211,141 @@
       },
       "Type": "AWS::IAM::Role"
     },
-    "ManagerLaunchConfig18030ceaws1tomalok1": {
-      "DependsOn": "ExternalLoadBalancer",
+    "ManagerECRPolicy": {
+      "DependsOn": [
+        "ProxyRole"
+      ],
       "Properties": {
-        "AssociatePublicIpAddress": "true",
-        "BlockDeviceMappings": [
-          {
-            "DeviceName": "/dev/xvdb",
-            "Ebs": {
-              "VolumeSize": {
-                "Ref": "ManagerDiskSize"
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": {
+                "Fn::FindInMap": [
+                  "ECRPolicyActions",
+                  {
+                    "Ref": "ManagerECRPolicyType"
+                  },
+                  "actions"
+                ]
               },
-              "VolumeType": {
-                "Ref": "ManagerDiskType"
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "ManagerECRPolicyARNs"
               }
             }
-          }
-        ],
-        "EbsOptimized": {
-          "Fn::If": [
-            "EBSOptimized",
-            "true",
-            "false"
-          ]
+          ],
+          "Version": "2012-10-17"
         },
-        "IamInstanceProfile": {
-          "Ref": "ProxyInstanceProfile"
-        },
-        "ImageId": {
-          "Fn::FindInMap": [
-            "AWSRegionArch2AMI",
-            {
-              "Ref": "AWS::Region"
-            },
-            {
-              "Fn::FindInMap": [
-                "AWSInstanceType2Arch",
-                {
-                  "Ref": "ManagerInstanceType"
-                },
-                "Arch"
-              ]
-            }
-          ]
-        },
-        "InstanceType": {
-          "Ref": "ManagerInstanceType"
-        },
-        "KeyName": {
-          "Ref": "KeyName"
-        },
-        "SecurityGroups": [
+        "PolicyName": "manager-ecr-policy",
+        "Roles": [
           {
-            "Ref": "ManagerVpcSG"
-          },
-          {
-            "Ref": "SwarmWideSG"
+            "Ref": "ProxyRole"
           }
-        ],
-        "UserData": {
-          "Fn::Base64": {
-            "Fn::Join": [
-              "",
-              [
-                "#!/bin/sh\n",
-                "export EXTERNAL_LB='",
-                {
-                  "Ref": "ExternalLoadBalancer"
-                },
-                "'\n",
-                "export DOCKER_FOR_IAAS_VERSION='",
-                {
-                  "Fn::FindInMap": [
-                    "DockerForAWS",
-                    "version",
-                    "forAws"
-                  ]
-                },
-                "'\n",
-                "export CHANNEL='",
-                {
-                  "Fn::FindInMap": [
-                    "DockerForAWS",
-                    "version",
-                    "channel"
-                  ]
-                },
-                "'\n",
-                "export EDITION_ADDON='",
-                {
-                  "Fn::FindInMap": [
-                    "DockerForAWS",
-                    "version",
-                    "addOn"
-                  ]
-                },
-                "'\n",
-                "export LOCAL_IP=$(wget -qO- http://169.254.169.254/latest/meta-data/local-ipv4)\n",
-                "export INSTANCE_TYPE=$(wget -qO- http://169.254.169.254/latest/meta-data/instance-type)\n",
-                "export NODE_AZ=$(wget -qO- http://169.254.169.254/latest/meta-data/placement/availability-zone/)\n",
-                "export NODE_REGION=$(echo $NODE_AZ | sed 's/.$//')\n",
-                "export ENABLE_CLOUDWATCH_LOGS='",
-                {
-                  "Ref": "EnableCloudWatchLogs"
-                },
-                "'\n",
-                "export AWS_REGION='",
-                {
-                  "Ref": "AWS::Region"
-                },
-                "'\n",
-                "export MANAGER_SECURITY_GROUP_ID='",
-                {
-                  "Ref": "ManagerVpcSG"
-                },
-                "'\n",
-                "export WORKER_SECURITY_GROUP_ID='",
-                {
-                  "Ref": "NodeVpcSG"
-                },
-                "'\n",
-                "export DYNAMODB_TABLE='",
-                {
-                  "Ref": "SwarmDynDBTable"
-                },
-                "'\n",
-                "export STACK_NAME='",
-                {
-                  "Ref": "AWS::StackName"
-                },
-                "'\n",
-                "export STACK_ID='",
-                {
-                  "Ref": "AWS::StackId"
-                },
-                "'\n",
-                "export ACCOUNT_ID='",
-                {
-                  "Ref": "AWS::AccountId"
-                },
-                "'\n",
-                "export VPC_ID='",
-                {
-                  "Ref": "Vpc"
-                },
-                "'\n",
-                "export SWARM_QUEUE='",
-                {
-                  "Ref": "SwarmSQS"
-                },
-                "'\n",
-                "export CLEANUP_QUEUE='",
-                {
-                  "Ref": "SwarmSQSCleanup"
-                },
-                "'\n",
-                "export RUN_VACUUM='",
-                {
-                  "Ref": "EnableSystemPrune"
-                },
-                "'\n",
-                "export LOG_GROUP_NAME='",
-                {
-                  "Fn::Join": [
-                    "-",
-                    [
-                      {
-                        "Ref": "AWS::StackName"
-                      },
-                      "lg"
-                    ]
-                  ]
-                },
-                "'\n",
-                "export HAS_DDC='",
-                {
-                  "Fn::FindInMap": [
-                    "DockerForAWS",
-                    "version",
-                    "HasDDC"
-                  ]
-                },
-                "'\n",
-                "export ENABLE_EFS='",
-                {
-                  "Fn::If": [
-                    "InstallCloudStorEFSPreReqs",
-                    "1",
-                    "0"
-                  ]
-                },
-                "'\n",
-                "export EFS_ID_REGULAR='",
-                {
-                  "Fn::If": [
-                    "InstallCloudStorEFSPreReqs",
-                    {
-                      "Ref": "FileSystemGP"
-                    },
-                    ""
-                  ]
-                },
-                "'\n",
-                "export EFS_ID_MAXIO='",
-                {
-                  "Fn::If": [
-                    "InstallCloudStorEFSPreReqs",
-                    {
-                      "Ref": "FileSystemMaxIO"
-                    },
-                    ""
-                  ]
-                },
-                "'\n",
-                "export DOCKER_EXPERIMENTAL='true' \n",
-                "export NODE_TYPE='manager'\n",
-                "export INSTANCE_NAME='ManagerAsg'\n",
-                "\n",
-                "mkdir -p /var/lib/docker/editions\n",
-                "echo \"$EXTERNAL_LB\" > /var/lib/docker/editions/lb_name\n",
-                "echo \"# hostname : ELB_name\" >> /var/lib/docker/editions/elb.config\n",
-                "echo \"127.0.0.1: $EXTERNAL_LB\" >> /var/lib/docker/editions/elb.config\n",
-                "echo \"localhost: $EXTERNAL_LB\" >> /var/lib/docker/editions/elb.config\n",
-                "echo \"default: $EXTERNAL_LB\" >> /var/lib/docker/editions/elb.config\n",
-                "\n",
-                "echo '{\"experimental\": '$DOCKER_EXPERIMENTAL', \"labels\":[\"os=linux\", \"region='$NODE_REGION'\", \"availability_zone='$NODE_AZ'\", \"instance_type='$INSTANCE_TYPE'\", \"node_type='$NODE_TYPE'\" ]' > /etc/docker/daemon.json\n",
-                "\n",
-                "if [ $ENABLE_CLOUDWATCH_LOGS == 'yes' ] ; then\n",
-                "   echo ', \"log-driver\": \"awslogs\", \"log-opts\": {\"awslogs-group\": \"'$LOG_GROUP_NAME'\", \"tag\": \"{{.Name}}-{{.ID}}\" }}' >> /etc/docker/daemon.json\n",
-                "else\n",
-                "   echo ' }' >> /etc/docker/daemon.json\n",
-                "fi\n",
-                "\n",
-                "chown -R docker /home/docker/\n",
-                "chgrp -R docker /home/docker/\n",
-                "rc-service docker restart\n",
-                "sleep 5\n",
-                "\n",
-                "# init-aws\n",
-                "docker run --label com.docker.editions.system --log-driver=json-file --restart=no -d -e DYNAMODB_TABLE=$DYNAMODB_TABLE -e NODE_TYPE=$NODE_TYPE -e REGION=$AWS_REGION -e STACK_NAME=$STACK_NAME -e STACK_ID=\"$STACK_ID\" -e ACCOUNT_ID=$ACCOUNT_ID -e INSTANCE_NAME=$INSTANCE_NAME -e DOCKER_FOR_IAAS_VERSION=$DOCKER_FOR_IAAS_VERSION -e EDITION_ADDON=$EDITION_ADDON -e HAS_DDC=$HAS_DDC -v /var/run/docker.sock:/var/run/docker.sock -v /var/log:/var/log docker4x/init-aws:$DOCKER_FOR_IAAS_VERSION\n",
-                "\n",
-                "# guide-aws\n",
-                "docker run --label com.docker.editions.system --log-driver=json-file --log-opt max-size=50m --name=guide-aws --restart=always -d -e DYNAMODB_TABLE=$DYNAMODB_TABLE -e NODE_TYPE=$NODE_TYPE -e REGION=$AWS_REGION -e STACK_NAME=$STACK_NAME -e INSTANCE_NAME=$INSTANCE_NAME -e VPC_ID=$VPC_ID -e STACK_ID=\"$STACK_ID\" -e ACCOUNT_ID=$ACCOUNT_ID -e SWARM_QUEUE=\"$SWARM_QUEUE\" -e CLEANUP_QUEUE=\"$CLEANUP_QUEUE\" -e RUN_VACUUM=$RUN_VACUUM -e DOCKER_FOR_IAAS_VERSION=$DOCKER_FOR_IAAS_VERSION -e EDITION_ADDON=$EDITION_ADDON -e HAS_DDC=$HAS_DDC -e CHANNEL=$CHANNEL -v /var/run/docker.sock:/var/run/docker.sock docker4x/guide-aws:$DOCKER_FOR_IAAS_VERSION\n",
-                "\n",
-                "# cloudstor\n",
-                "docker plugin install --alias cloudstor:aws --grant-all-permissions docker4x/cloudstor:$DOCKER_FOR_IAAS_VERSION CLOUD_PLATFORM=AWS EFS_ID_REGULAR=$EFS_ID_REGULAR EFS_ID_MAXIO=$EFS_ID_MAXIO AWS_REGION=$AWS_REGION AWS_STACK_ID=$STACK_ID EFS_SUPPORTED=$ENABLE_EFS DEBUG=1\n",
-                "docker run --label com.docker.editions.system --log-driver=json-file  --log-opt max-size=50m --name=meta-aws --restart=always -d -p $LOCAL_IP:9024:8080 -e AWS_REGION=$AWS_REGION -e MANAGER_SECURITY_GROUP_ID=$MANAGER_SECURITY_GROUP_ID -e WORKER_SECURITY_GROUP_ID=$WORKER_SECURITY_GROUP_ID -v /var/run/docker.sock:/var/run/docker.sock docker4x/meta-aws:$DOCKER_FOR_IAAS_VERSION metaserver -iaas_provider=aws\n",
-                "docker run --label com.docker.editions.system --log-driver=json-file  --log-opt max-size=50m --name=l4controller-aws --restart=always -d -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker/editions:/var/lib/docker/editions docker4x/l4controller-aws:$DOCKER_FOR_IAAS_VERSION run --log=4 --all=true\n",
-                "### begin installation of refresh-ecr-auth.sh\n",
-                "BINDIR=/usr/local/bin\n",
-                "mkdir -p $BINDIR\n",
-                "SCRIPT=refresh-ecr-auth.sh\n",
-                "cat >$BINDIR/$SCRIPT <<EOF\n",
-                "#!/bin/sh -ex\n",
-                "ECR_LOGIN=\"\\$(docker exec guide-aws aws ecr get-login --no-include-email --region $AWS_REGION)\"\n",
-                "eval \\$ECR_LOGIN\n",
-                "su docker sh -c \"eval \\$ECR_LOGIN\"\n",
-                "for SERVICE in \\$(docker service ls --format \"{{.Name}}\"); do\n",
-                "  docker service update -q --with-registry-auth \\$SERVICE\n",
-                "done\n",
-                "EOF\n",
-                "chmod +x $BINDIR/$SCRIPT\n",
-                "sed -e \"/$SCRIPT/d\" /etc/crontabs/root > /tmp/root-crontab\n",
-                "echo \"# run $SCRIPT on the random-th minute every 8 hours\" >> /tmp/root-crontab\n",
-                "echo \"$(( $RANDOM % 60 )) */8 * * * $BINDIR/$SCRIPT\" >> /tmp/root-crontab\n",
-                "crontab -c /etc/crontabs /tmp/root-crontab\n",
-                "rm /tmp/root-crontab\n",
-                "$BINDIR/$SCRIPT\n",
-                "### end installation of refresh-ecr-auth.sh\n"
-              ]
-            ]
-          }
-        }
+        ]
       },
-      "Type": "AWS::AutoScaling::LaunchConfiguration"
+      "Type": "AWS::IAM::Policy"
     },
-    "NodeLaunchConfig18030ceaws1tomalok1": {
-      "DependsOn": "ManagerAsg",
+    "WorkerECRPolicy": {
+      "DependsOn": [
+        "WorkerRole"
+      ],
       "Properties": {
-        "AssociatePublicIpAddress": "true",
-        "BlockDeviceMappings": [
-          {
-            "DeviceName": "/dev/xvdb",
-            "Ebs": {
-              "VolumeSize": {
-                "Ref": "WorkerDiskSize"
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": {
+                "Fn::FindInMap": [
+                  "ECRPolicyActions",
+                  {
+                    "Ref": "WorkerECRPolicyType"
+                  },
+                  "actions"
+                ]
               },
-              "VolumeType": {
-                "Ref": "WorkerDiskType"
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "WorkerECRPolicyARNs"
               }
             }
-          }
-        ],
-        "EbsOptimized": {
-          "Fn::If": [
-            "EBSOptimized",
-            "true",
-            "false"
-          ]
+          ],
+          "Version": "2012-10-17"
         },
-        "IamInstanceProfile": {
-          "Ref": "WorkerInstanceProfile"
-        },
-        "ImageId": {
-          "Fn::FindInMap": [
-            "AWSRegionArch2AMI",
-            {
-              "Ref": "AWS::Region"
-            },
-            {
-              "Fn::FindInMap": [
-                "AWSInstanceType2Arch",
-                {
-                  "Ref": "InstanceType"
-                },
-                "Arch"
-              ]
-            }
-          ]
-        },
-        "InstanceType": {
-          "Ref": "InstanceType"
-        },
-        "KeyName": {
-          "Ref": "KeyName"
-        },
-        "SecurityGroups": [
+        "PolicyName": "worker-ecr-policy",
+        "Roles": [
           {
-            "Ref": "NodeVpcSG"
+            "Ref": "WorkerRole"
           }
-        ],
-        "UserData": {
-          "Fn::Base64": {
-            "Fn::Join": [
-              "",
-              [
-                "#!/bin/sh\n",
-                "export EXTERNAL_LB='",
-                {
-                  "Ref": "ExternalLoadBalancer"
-                },
-                "'\n",
-                "export DOCKER_FOR_IAAS_VERSION='",
-                {
-                  "Fn::FindInMap": [
-                    "DockerForAWS",
-                    "version",
-                    "forAws"
-                  ]
-                },
-                "'\n",
-                "export CHANNEL='",
-                {
-                  "Fn::FindInMap": [
-                    "DockerForAWS",
-                    "version",
-                    "channel"
-                  ]
-                },
-                "'\n",
-                "export EDITION_ADDON='",
-                {
-                  "Fn::FindInMap": [
-                    "DockerForAWS",
-                    "version",
-                    "addOn"
-                  ]
-                },
-                "'\n",
-                "export LOCAL_IP=$(wget -qO- http://169.254.169.254/latest/meta-data/local-ipv4)\n",
-                "export INSTANCE_TYPE=$(wget -qO- http://169.254.169.254/latest/meta-data/instance-type)\n",
-                "export NODE_AZ=$(wget -qO- http://169.254.169.254/latest/meta-data/placement/availability-zone/)\n",
-                "export NODE_REGION=$(echo $NODE_AZ | sed 's/.$//')\n",
-                "export ENABLE_CLOUDWATCH_LOGS='",
-                {
-                  "Ref": "EnableCloudWatchLogs"
-                },
-                "'\n",
-                "export AWS_REGION='",
-                {
-                  "Ref": "AWS::Region"
-                },
-                "'\n",
-                "export MANAGER_SECURITY_GROUP_ID='",
-                {
-                  "Ref": "ManagerVpcSG"
-                },
-                "'\n",
-                "export WORKER_SECURITY_GROUP_ID='",
-                {
-                  "Ref": "NodeVpcSG"
-                },
-                "'\n",
-                "export DYNAMODB_TABLE='",
-                {
-                  "Ref": "SwarmDynDBTable"
-                },
-                "'\n",
-                "export STACK_NAME='",
-                {
-                  "Ref": "AWS::StackName"
-                },
-                "'\n",
-                "export STACK_ID='",
-                {
-                  "Ref": "AWS::StackId"
-                },
-                "'\n",
-                "export ACCOUNT_ID='",
-                {
-                  "Ref": "AWS::AccountId"
-                },
-                "'\n",
-                "export VPC_ID='",
-                {
-                  "Ref": "Vpc"
-                },
-                "'\n",
-                "export SWARM_QUEUE='",
-                {
-                  "Ref": "SwarmSQS"
-                },
-                "'\n",
-                "export CLEANUP_QUEUE='",
-                {
-                  "Ref": "SwarmSQSCleanup"
-                },
-                "'\n",
-                "export RUN_VACUUM='",
-                {
-                  "Ref": "EnableSystemPrune"
-                },
-                "'\n",
-                "export LOG_GROUP_NAME='",
-                {
-                  "Fn::Join": [
-                    "-",
-                    [
-                      {
-                        "Ref": "AWS::StackName"
-                      },
-                      "lg"
-                    ]
-                  ]
-                },
-                "'\n",
-                "export HAS_DDC='",
-                {
-                  "Fn::FindInMap": [
-                    "DockerForAWS",
-                    "version",
-                    "HasDDC"
-                  ]
-                },
-                "'\n",
-                "export ENABLE_EFS='",
-                {
-                  "Fn::If": [
-                    "InstallCloudStorEFSPreReqs",
-                    "1",
-                    "0"
-                  ]
-                },
-                "'\n",
-                "export EFS_ID_REGULAR='",
-                {
-                  "Fn::If": [
-                    "InstallCloudStorEFSPreReqs",
-                    {
-                      "Ref": "FileSystemGP"
-                    },
-                    ""
-                  ]
-                },
-                "'\n",
-                "export EFS_ID_MAXIO='",
-                {
-                  "Fn::If": [
-                    "InstallCloudStorEFSPreReqs",
-                    {
-                      "Ref": "FileSystemMaxIO"
-                    },
-                    ""
-                  ]
-                },
-                "'\n",
-                "export DOCKER_EXPERIMENTAL='true' \n",
-                "export NODE_TYPE='worker'\n",
-                "export INSTANCE_NAME='NodeAsg'\n",
-                "\n",
-                "mkdir -p /var/lib/docker/editions\n",
-                "echo \"$EXTERNAL_LB\" > /var/lib/docker/editions/lb_name\n",
-                "echo \"# hostname : ELB_name\" >> /var/lib/docker/editions/elb.config\n",
-                "echo \"127.0.0.1: $EXTERNAL_LB\" >> /var/lib/docker/editions/elb.config\n",
-                "echo \"localhost: $EXTERNAL_LB\" >> /var/lib/docker/editions/elb.config\n",
-                "echo \"default: $EXTERNAL_LB\" >> /var/lib/docker/editions/elb.config\n",
-                "\n",
-                "echo '{\"experimental\": '$DOCKER_EXPERIMENTAL', \"labels\":[\"os=linux\", \"region='$NODE_REGION'\", \"availability_zone='$NODE_AZ'\", \"instance_type='$INSTANCE_TYPE'\", \"node_type='$NODE_TYPE'\" ]' > /etc/docker/daemon.json\n",
-                "\n",
-                "if [ $ENABLE_CLOUDWATCH_LOGS == 'yes' ] ; then\n",
-                "   echo ', \"log-driver\": \"awslogs\", \"log-opts\": {\"awslogs-group\": \"'$LOG_GROUP_NAME'\", \"tag\": \"{{.Name}}-{{.ID}}\" }}' >> /etc/docker/daemon.json\n",
-                "else\n",
-                "   echo ' }' >> /etc/docker/daemon.json\n",
-                "fi\n",
-                "\n",
-                "chown -R docker /home/docker/\n",
-                "chgrp -R docker /home/docker/\n",
-                "rc-service docker restart\n",
-                "sleep 5\n",
-                "\n",
-                "# init-aws\n",
-                "docker run --label com.docker.editions.system --log-driver=json-file --restart=no -d -e DYNAMODB_TABLE=$DYNAMODB_TABLE -e NODE_TYPE=$NODE_TYPE -e REGION=$AWS_REGION -e STACK_NAME=$STACK_NAME -e STACK_ID=\"$STACK_ID\" -e ACCOUNT_ID=$ACCOUNT_ID -e INSTANCE_NAME=$INSTANCE_NAME -e DOCKER_FOR_IAAS_VERSION=$DOCKER_FOR_IAAS_VERSION -e EDITION_ADDON=$EDITION_ADDON -e HAS_DDC=$HAS_DDC -v /var/run/docker.sock:/var/run/docker.sock -v /var/log:/var/log docker4x/init-aws:$DOCKER_FOR_IAAS_VERSION\n",
-                "\n",
-                "# guide-aws\n",
-                "docker run --label com.docker.editions.system --log-driver=json-file --log-opt max-size=50m --name=guide-aws --restart=always -d -e DYNAMODB_TABLE=$DYNAMODB_TABLE -e NODE_TYPE=$NODE_TYPE -e REGION=$AWS_REGION -e STACK_NAME=$STACK_NAME -e INSTANCE_NAME=$INSTANCE_NAME -e VPC_ID=$VPC_ID -e STACK_ID=\"$STACK_ID\" -e ACCOUNT_ID=$ACCOUNT_ID -e SWARM_QUEUE=\"$SWARM_QUEUE\" -e CLEANUP_QUEUE=\"$CLEANUP_QUEUE\" -e RUN_VACUUM=$RUN_VACUUM -e DOCKER_FOR_IAAS_VERSION=$DOCKER_FOR_IAAS_VERSION -e EDITION_ADDON=$EDITION_ADDON -e HAS_DDC=$HAS_DDC -e CHANNEL=$CHANNEL -v /var/run/docker.sock:/var/run/docker.sock docker4x/guide-aws:$DOCKER_FOR_IAAS_VERSION\n",
-                "\n",
-                "# cloudstor\n",
-                "docker plugin install --alias cloudstor:aws --grant-all-permissions docker4x/cloudstor:$DOCKER_FOR_IAAS_VERSION CLOUD_PLATFORM=AWS EFS_ID_REGULAR=$EFS_ID_REGULAR EFS_ID_MAXIO=$EFS_ID_MAXIO AWS_REGION=$AWS_REGION AWS_STACK_ID=$STACK_ID EFS_SUPPORTED=$ENABLE_EFS DEBUG=1\n",
-                "# Worker user data\n",
-                "### begin installation of refresh-ecr-auth.sh\n",
-                "BINDIR=/usr/local/bin\n",
-                "mkdir -p $BINDIR\n",
-                "SCRIPT=refresh-ecr-auth.sh\n",
-                "cat >$BINDIR/$SCRIPT <<EOF\n",
-                "#!/bin/sh -ex\n",
-                "ECR_LOGIN=\"\\$(docker exec guide-aws aws ecr get-login --no-include-email --region $AWS_REGION)\"\n",
-                "eval \\$ECR_LOGIN\n",
-                "su docker sh -c \"eval \\$ECR_LOGIN\"\n",
-                "for SERVICE in \\$(docker service ls --format \"{{.Name}}\"); do\n",
-                "  docker service update -q --with-registry-auth \\$SERVICE\n",
-                "done\n",
-                "EOF\n",
-                "chmod +x $BINDIR/$SCRIPT\n",
-                "sed -e \"/$SCRIPT/d\" /etc/crontabs/root > /tmp/root-crontab\n",
-                "echo \"# run $SCRIPT on the random-th minute every 8 hours\" >> /tmp/root-crontab\n",
-                "echo \"$(( $RANDOM % 60 )) */8 * * * $BINDIR/$SCRIPT\" >> /tmp/root-crontab\n",
-                "crontab -c /etc/crontabs /tmp/root-crontab\n",
-                "rm /tmp/root-crontab\n",
-                "$BINDIR/$SCRIPT\n",
-                "### end installation of refresh-ecr-auth.sh\n"
-              ]
-            ]
-          }
-        }
+        ]
       },
-      "Type": "AWS::AutoScaling::LaunchConfiguration"
+      "Type": "AWS::IAM::Policy"
+    },
+    "ManagerACMPolicy": {
+      "DependsOn": [
+        "ProxyRole"
+      ],
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": {
+                "Fn::FindInMap": [
+                  "ACMPolicyActions",
+                  {
+                    "Ref": "WorkerACMPolicyType"
+                  },
+                  "actions"
+                ]
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "ManagerACMPolicyARNs"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "manager-acm-policy",
+        "Roles": [
+          {
+            "Ref": "ProxyRole"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Policy"
+    },
+    "WorkerACMPolicy": {
+      "DependsOn": [
+        "WorkerRole"
+      ],
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": {
+                "Fn::FindInMap": [
+                  "ACMPolicyActions",
+                  {
+                    "Ref": "WorkerACMPolicyType"
+                  },
+                  "actions"
+                ]
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "WorkerACMPolicyARNs"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "worker-acm-policy",
+        "Roles": [
+          {
+            "Ref": "WorkerRole"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Policy"
     }
   }
 }
