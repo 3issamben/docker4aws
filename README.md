@@ -1,6 +1,6 @@
 # Docker for AWS CloudFormation Template Tweaker
 
-A program that tweaks [Docker for AWS](https://docs.docker.com/docker-for-aws/) CloudFormation templates to include missing/useful functionality.  This has been implemented as a script, rather than a set of patches, to work across the different editions/channels/versions of the [Docker for AWS](https://docks.docker.com/docker-for-aws/).
+A program that tweaks [Docker for AWS](https://docs.docker.com/docker-for-aws/) CloudFormation templates to include missing/useful functionality.  This has been implemented as a script, rather than a set of patches, to work across the different editions/channels/versions of the [Docker for AWS](https://docs.docker.com/docker-for-aws/).
 
 The modifications have been verified with the community edition, stable channel versions between 17.09.0-ce-aws1 and 18.03.0-ce-aws-1 with the "build-a-VPC" option.  Although currently unconfirmed, it is very likely that the edge and enterprise channels, the "don't-build-a-VPC" option, and other versions will also work.
 
